@@ -34,14 +34,14 @@ model:
   sampling_rate: *samplingrate
   block_size: *blocksize
  
-  input_hop:  3
-  input_length: &inputlength 60
+  input_hop:  4
+  input_length: &inputlength 80
   hidden_size:  256
   
   FM_sync:  "FLUTE"
-  FM_config: [1.5 2.0 2.0 1.0 1.0 1.0]
+  FM_config: [1.5, 2.0, 2.0, 1.0, 1.0, 1.0]
   FM_amp:  3.0
-  noise_band: 64
+  noise_bands: 65
   reverb_length: 1024
 
 train:

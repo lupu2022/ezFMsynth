@@ -187,7 +187,7 @@ class DDSP(nn.Module):
         omegas = []
         omega = torch.cumsum(2 * math.pi * pitch  / self.sampling_rate, 1)
         for i in range(0, len(self.FM_config)):
-            omegas.append( omega * (self.FM_config[i]))
+            omegas.append( omega * self.FM_config[i])
 
         '''
         Flute FM Synth - with phase wrapping (it does not change behaviour)
