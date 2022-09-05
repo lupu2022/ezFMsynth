@@ -1,0 +1,9 @@
+preprocess:
+  sampling_rate:  &samplingrate  32000
+  signal_length:  &signallength 128000
+  block_size:     &blocksize 320   
+  conf_threshold: 0.85
+  out_dir: ./preprocessed/
+  data_location:  /home/teaonly/dataset/CINSTR/dizi
+  extension: "wav"
+
