@@ -43,3 +43,8 @@ model:
   FM_amp:  3.0
   noise_band: 64
   reverb_length: 1024
+
+train:
+  scales:   [ 8192,   4096,   2048,  1024,  512,   256,  128]
+  weights:  [ 1.0,    1.0,    1.0,   1.0,   1.0,   1.0,  1.0]
+  overlap:  0.75
