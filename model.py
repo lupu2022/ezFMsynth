@@ -121,16 +121,17 @@ class Reverb(nn.Module):
         return x
 
 class DDSP(nn.Module):
-    def __init__(self, input_length, input_hop, hidden_size, FM_config, noise_bands, sampling_rate, block_size, reverb_length):
+    def __init__(self, input_length, input_hop, hidden_size, FM_sync, FM_config, FM_amp, noise_bands, sampling_rate, block_size, reverb_length):
         super().__init__()
 
         self.sampling_rate = sampling_rate
         self.block_size = block_size * input_hop
         self.input_length = input_length
         self.input_hop = input_hop
+        self.FM_sync = FM_sync
         self.FM_config = FM_config
+        self.FM_amp = FM_amp
         self.noise_bands = noise_bands
-        self.index_number = 6
 
         # pitch & loudness are inputs
         self.pitch_mlp = mlp(input_length, hidden_size, 2)
@@ -140,8 +141,9 @@ class DDSP(nn.Module):
         self.out_mlp = mlp(hidden_size * 2, hidden_size, 3)
 
         # finaly output for FM synthesizer
-        self.alpha_proj = nn.Linear(hidden_size, self.index_number);
-        self.beta_proj = nn.Linear(hidden_size, self.index_number);
+        index_number = len(self.FM_config)
+        self.alpha_proj = nn.Linear(hidden_size, index_number);
+        self.beta_proj = nn.Linear(hidden_size, index_number);
         self.bands_proj = nn.Linear(hidden_size, self.noise_bands)
 
         # long FIR kernel for post-processing
@@ -167,7 +169,7 @@ class DDSP(nn.Module):
         if ( self.timeline == None ):
             t = torch.arange(self.block_size, device = pitch.device) / self.block_size
             t = t.reshape( [1, self.block_size, 1] );
-            self.timeline = t.repeat(pitch.size()[0], pitch.size()[1],  self.index_number)
+            self.timeline = t.repeat(pitch.size()[0], pitch.size()[1],  len(self.FM_config))
 
         alpha = self.FM_amp * torch.sigmoid(self.alpha_proj(hidden_out)) + 1e-7;
         beta = self.FM_amp * torch.sigmoid(self.beta_proj(hidden_out)) + 1e-7;
@@ -182,8 +184,30 @@ class DDSP(nn.Module):
         pitch = upsample(pitch, self.block_size // self.input_hop)
 
         # 2. FM synthesizer
+        omegas = []
+        omega = torch.cumsum(2 * math.pi * pitch  / self.sampling_rate, 1)
+        for i in range(0, len(self.FM_config)):
+            omegas.append( omega * (self.FM_config[i]))
 
-        ### TODO
+        '''
+        Flute FM Synth - with phase wrapping (it does not change behaviour)
+        PATCH NAME: FLUTE 1
+            1.5->2->|
+              2->1->|
+                 1->|->1->out
+        '''
+        if self.FM_sync == "FLUTE":
+            op1_out = fms[..., 0:1] * torch.sin(omegas[0])
+            op2_out = fms[..., 1:2] * torch.sin(omegas[1] + op1_out)
+
+            op3_out = fms[..., 2:3] * torch.sin(omegas[2])
+            op4_out = fms[..., 3:4] * torch.sin(omegas[3] + op3_out)
+
+            op5_out = fms[..., 4:5] * torch.sin(omegas[4])
+
+            op6_out = fms[..., 5:6] * torch.sin(omegas[5] + op5_out + op4_out + op2_out)
+
+        harmonic = op6_out.squeeze(-1)
 
         ################# noise (resudual) filter ####################
         bands = 2.0 * torch.sigmoid(self.bands_proj(hidden_out) - 5.0) + 1e-7
