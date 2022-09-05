@@ -23,11 +23,11 @@
 
 preprocess:
   sampling_rate:  &samplingrate  22050
-  signal_length:  &signallength 88200
+  signal_length:  &signallength  88200
   block_size:     &blocksize 245
   conf_threshold: 0.85
   out_dir: ./preprocessed/
-  data_location:  /home/teaonly/dataset/CINSTR/dizi
+  data_location:  /home/teaonly/dataset/CINSTR/erhu
   extension: "wav"
 
 model:
@@ -38,8 +38,8 @@ model:
   input_length: &inputlength 64
   hidden_size:  256
   
-  FM_sync:  "FLUTE"
-  FM_config: [1.5, 2.0, 2.0, 1.0, 1.0, 1.0]
+  FM_sync:  "STRING"
+  FM_config: [10.0, 3.0, 1.0, 1.0, 1.0, 1.0]
   FM_amp:  3.0
   noise_bands: 65
   reverb_length: 1024

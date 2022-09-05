@@ -207,8 +207,26 @@ class DDSP(nn.Module):
 
             op1_out = fms[..., 5:6] * torch.sin(omegas[5] + op5_out + op3_out + op2_out)
 
+            op0_out = op1_out
 
-        harmonic = op1_out.squeeze(-1)
+        '''
+        String FM Synth - with phase wrapping (it does not change behaviour)
+        PATCH NAME: STRINGS 1
+        14->3->1->1 |
+               1->1 |->out
+        '''
+        if self.FM_sync == "STRING":
+            op6_out = fms[..., 0:1] * torch.sin(omegas[0])
+            op5_out = fms[..., 1:2] * torch.sin(omegas[1] + op6_out)
+            op4_out = fms[..., 2:3] * torch.sin(omegas[2] + op5_out)
+            op3_out = fms[..., 3:4] * torch.sin(omegas[3] + op4_out)
+
+            op2_out = fms[..., 4:5] * torch.sin(omegas[4])
+            op1_out = fms[..., 5:6] * torch.sin(omegas[5] + op2_out)
+
+            op0_out = op1_out + op3_out
+
+        harmonic = op0_out.squeeze(-1)
 
         ################# noise (resudual) filter ####################
         bands = 2.0 * torch.sigmoid(self.bands_proj(hidden_out) - 5.0) + 1e-7
