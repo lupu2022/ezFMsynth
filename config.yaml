@@ -22,9 +22,9 @@
 ###
 
 preprocess:
-  sampling_rate:  &samplingrate  32000
-  signal_length:  &signallength 128000
-  block_size:     &blocksize 320
+  sampling_rate:  &samplingrate  22050
+  signal_length:  &signallength 88200
+  block_size:     &blocksize 245
   conf_threshold: 0.85
   out_dir: ./preprocessed/
   data_location:  /home/teaonly/dataset/CINSTR/dizi
@@ -35,7 +35,7 @@ model:
   block_size: *blocksize
  
   input_hop:  4
-  input_length: &inputlength 80
+  input_length: &inputlength 64
   hidden_size:  256
   
   FM_sync:  "FLUTE"
@@ -45,6 +45,6 @@ model:
   reverb_length: 1024
 
 train:
-  scales:   [ 8192,   4096,   2048,  1024,  512,   256,  128]
-  weights:  [ 1.0,    1.0,    1.0,   1.0,   1.0,   1.0,  1.0]
+  scales:   [ 4096,   2048,  1024,  512,   256,  128,  64]
+  weights:  [ 1.0,    1.0,   1.0,   1.0,   1.0,  1.0,  1.0]
   overlap:  0.75
