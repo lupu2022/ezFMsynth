@@ -38,7 +38,7 @@ class args(Config):
     NAME = "debug"
     ROOT = "runs"
     STEPS = 10000
-    BATCH = 16
+    BATCH = 24
     LR = 1e-3
 
 def do_train():

@@ -121,14 +121,13 @@ class Reverb(nn.Module):
         return x
 
 class DDSP(nn.Module):
-    def __init__(self, input_length, input_hop, hidden_size, FM_sync, FM_config, FM_amp, noise_bands, sampling_rate, block_size, reverb_length):
+    def __init__(self, input_length, input_hop, hidden_size, FM_config, FM_amp, noise_bands, sampling_rate, block_size, reverb_length):
         super().__init__()
 
         self.sampling_rate = sampling_rate
         self.block_size = block_size * input_hop
         self.input_length = input_length
         self.input_hop = input_hop
-        self.FM_sync = FM_sync
         self.FM_config = FM_config
         self.FM_amp = FM_amp
         self.noise_bands = noise_bands
@@ -189,58 +188,19 @@ class DDSP(nn.Module):
         for i in range(0, len(self.FM_config)):
             omegas.append( omega * self.FM_config[i])
 
-        '''
-        Flute FM Synth
-            1.5->2->|
-              2->1->|
-                 1->|->1->out
-        '''
-        if self.FM_sync == "FLUTE":
-            op6_out = fms[..., 0:1] * torch.sin(omegas[0])
-            op5_out = fms[..., 1:2] * torch.sin(omegas[1] + op6_out)
+        op9_out = fms[..., 0:1] * torch.sin(omegas[0])
+        op8_out = fms[..., 1:2] * torch.sin(omegas[1] + op9_out)
+        op7_out = fms[..., 2:3] * torch.sin(omegas[2] + op8_out)
 
-            op4_out = fms[..., 2:3] * torch.sin(omegas[2])
-            op3_out = fms[..., 3:4] * torch.sin(omegas[3] + op4_out)
+        op6_out = fms[..., 3:4] * torch.sin(omegas[3])
+        op5_out = fms[..., 4:5] * torch.sin(omegas[4] + op6_out)
+        op4_out = fms[..., 5:6] * torch.sin(omegas[5] + op5_out)
 
-            op2_out = fms[..., 4:5] * torch.sin(omegas[4])
+        op3_out = fms[..., 6:7] * torch.sin(omegas[6])
+        op2_out = fms[..., 7:8] * torch.sin(omegas[7] + op3_out)
+        op1_out = fms[..., 8:9] * torch.sin(omegas[8] + op2_out)
 
-            op1_out = fms[..., 5:6] * torch.sin(omegas[5] + op5_out + op3_out + op2_out)
-
-            op0_out = op1_out
-
-        '''
-        String FM Synth
-        14->3->1->1 |
-               1->1 |->out
-        '''
-        if self.FM_sync == "STRING":
-            op6_out = fms[..., 0:1] * torch.sin(omegas[0])
-            op5_out = fms[..., 1:2] * torch.sin(omegas[1] + op6_out)
-            op4_out = fms[..., 2:3] * torch.sin(omegas[2] + op5_out)
-            op3_out = fms[..., 3:4] * torch.sin(omegas[3] + op4_out)
-
-            op2_out = fms[..., 4:5] * torch.sin(omegas[4])
-            op1_out = fms[..., 5:6] * torch.sin(omegas[5] + op2_out)
-
-            op0_out = op1_out + op3_out
-
-        '''
-        Brass FM Synth
-        8.5->3.2->1->|
-                  2->|
-                  1->|->1->out
-        '''
-        if self.FM_sync == "BRASS":
-            op6_out = fms[..., 0:1] * torch.sin(omegas[0])
-            op5_out = fms[..., 1:2] * torch.sin(omegas[1] + op6_out)
-            op4_out = fms[..., 2:3] * torch.sin(omegas[2] + op5_out)
-
-            op3_out = fms[..., 3:4] * torch.sin(omegas[3])
-            op2_out = fms[..., 4:5] * torch.sin(omegas[4])
-
-            op1_out = fms[..., 5:6] * torch.sin(omegas[5] + op2_out + op3_out + op4_out)
-
-            op0_out = op1_out
+        op0_out = op7_out + op4_out + op1_out
 
         harmonic = op0_out.squeeze(-1)
 
